@@ -1,0 +1,76 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration</title>
+    <!-- ... (unchanged head content) -->
+</head>
+<body>
+    <form id="registrationForm">
+        <h1>User Registration</h1>
+
+        <label for="username">Username:</label>
+        <input type="text" id="username" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" required>
+
+        <label for="profilePicture">Profile Picture URL:</label>
+        <input type="text" id="profilePicture">
+
+        <button type="button" onclick="registerUser()">Register</button>
+
+        <div>
+            <p>Already registered? <button onclick="goToLoginPage()">Login</button></p>
+        </div>
+    </form>
+
+    <div id="response"></div>
+
+    <script>
+            async function registerUser() {
+            const username = document.getElementById("username").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const profilePicture = document.getElementById("profilePicture").value;
+
+            const userData = {
+            username: username,
+            email: email,
+            password: password,
+            profile_picture: profilePicture
+        };
+
+            try {
+            const response = await fetch('http://localhost:8000/register', {
+            method: 'POST',
+            headers: {
+            'Content-Type': 'application/json',
+        },
+            body: JSON.stringify(userData),
+        });
+
+            const responseData = await response.json();
+
+            // Display response
+            document.getElementById("response").innerHTML = JSON.stringify(responseData, null, 2);
+        } catch (error) {
+            console.error('Error:', error);
+        }
+        }
+
+
+    function goToLoginPage() {
+    window.location.href = 'login.html';
+    }
+    </script>
+</body>
+</html>
