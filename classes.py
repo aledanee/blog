@@ -38,5 +38,5 @@ class Comment(BaseModel):
     post_id: int
     user_id: int
     comment_text: str
-    comment_date: date
+    comment_date: str  # Adjust the data type as needed
 

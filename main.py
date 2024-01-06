@@ -1,5 +1,7 @@
 # from fastapi import FastAPI, HTTPException
 # from fastapi.middleware.cors import CORSMiddleware
+import re
+
 import Db_Operation
 from classes import User, Login, BlogPost, Like, Comment, UsereRgi
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,51 +28,60 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Function to connect to MySQL
+def connect_to_mysql():
+    return Db_Operation.py.connect(host="localhost", user="root", password="morootok", db="blog")
+
 
 @app.post("/register")
 async def register_user(user_data: UsereRgi):
-    conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
+    conn = None
+    try:
+        conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
+        cursor = conn.cursor()
 
-    # Extract user information from the URL
-    # user_info_dict = dict(item.split("=") for item in user_info.split("&"))
-    # user_id = user_info_dict.get("user", "")
+        # Extract user data from the request
+        username = user_data.username
+        email = user_data.email
+        password = user_data.password
+        profile_picture = user_data.profile_picture
 
-    # Extract user data from JSON
-    username = user_data.username
-    email = user_data.email
-    password = user_data.password
-    profile_picture = user_data.profile_picture  # Make sure to include this field
+        # Validate email format
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            return {"error": "Invalid email format."}
 
-    # # Validate input data
-    # if not username or not email or not password:
-    #     raise HTTPException(status_code=422, detail="Missing required fields")
+        # Check password length
+        if len(password) < 8:
+            return {"error": "Password must be at least 8 characters long."}
 
-    # Other validation checks can be added as needed...
-
-    # Check if user already exists
-    cursor = conn.cursor()
-    query = f"SELECT * FROM User WHERE username='{username}' OR email='{email}'"
-    cursor.execute(query)
-    existing_user = cursor.fetchone()
-
-    # If user doesn't exist, create a new record
-    if not existing_user:
-        query = f"INSERT INTO User (username, email, password, profile_picture) " \
-                f"VALUES ('{username}', '{email}', '{password}', '{profile_picture}')"
+        # Check if user already exists
+        query = f"SELECT * FROM User WHERE username='{username}' OR email='{email}'"
         cursor.execute(query)
-        conn.commit()
-        response = {"message": f"User '{username}' successfully registered"}
-    else:
-        response = {"error": "User already exists."}
+        existing_user = cursor.fetchone()
 
+        if not existing_user:
+            # If user doesn't exist, create a new record
+            query = f"INSERT INTO User (username, email, password, profile_picture) " \
+                    f"VALUES ('{username}', '{email}', '{password}', '{profile_picture}')"
+            cursor.execute(query)
+            conn.commit()
+            response = {"message": f"User '{username}' successfully registered"}
+        else:
+            response = {"error": "User already exists."}
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+    # Return the response
     return response
 
 
 @app.post("/login")
-async def login_user(user_data: Login, user_info: str = Query(...)):
+async def login_user(user_data: Login, ):
     # Extract user information from the URL
-    user_info_dict = dict(item.split("=") for item in user_info.split("&"))
-    user_id = user_info_dict.get("user", "")
 
     conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
 
@@ -100,29 +111,23 @@ async def login_user(user_data: Login, user_info: str = Query(...)):
 @app.post("/create_new_post")
 async def create_new_post(post_data: BlogPost):
     conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
-
-    # Extract user data from JSON
-    title = post_data.title
-    content = post_data.content
-    publication_date = post_data.publication_date
-    author_id = post_data.author_id
+    cursor = conn.cursor()
 
     # Check if user already exists
-    cursor = conn.cursor()
-    query = f"SELECT * FROM User WHERE user_id='{author_id}'"
-    cursor.execute(query)
+    query = "SELECT * FROM User WHERE user_id=%s"
+    cursor.execute(query, (post_data.author_id,))
     existing_user = cursor.fetchone()
 
-    # If user doesn't exist, create a new record
-    if existing_user:
-        query = f"INSERT INTO blogpost (title, content, publication_date) VALUES ('{title}', '{content}', '{publication_date}')"
-        cursor.execute(query)
-        conn.commit()
-        response = {"message": f" '{title}' successfully post"}
-    else:
-        response = {"error": " bad req."}
+    # If user doesn't exist, return an error
+    if not existing_user:
+        return {"error": "User not found."}
 
-    return response
+    # Insert the post without publication_date
+    query = "INSERT INTO blogpost (title, content, author_id) VALUES (%s, %s, %s)"
+    cursor.execute(query, (post_data.title, post_data.content, post_data.author_id))
+    conn.commit()
+
+    return {"message": f" '{post_data.title}' successfully posted"}
 
 
 @app.post("/update_post")
@@ -320,8 +325,35 @@ async def read_user(username: str = Query(..., title="The username of the user t
         profile_picture=user_data[4]  # Assuming profile_picture is the fifth column in the User table
     )
 
-    return user.__dict__
+    return user
 
+
+@app.get("/user", response_model=User)
+async def read_user(username: str = Query(..., title="The username of the user to read")):
+    conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
+    cursor = conn.cursor()
+
+    # Fetch user data from the database based on username
+    query = f"SELECT username, email, profile_picture FROM User WHERE username = %s"
+    cursor.execute(query, (username,))
+    user_data = cursor.fetchone()
+
+    # Close the database connection
+    cursor.close()
+    conn.close()
+
+    # If user does not exist, raise an HTTPException
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Create a User object using the retrieved data
+    user = User(
+        username=user_data[0],
+        email=user_data[1],
+        profile_picture=user_data[2]
+    )
+
+    return user
 
 @app.get("/user/all")
 async def get_all_users():

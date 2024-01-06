@@ -2,9 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create New Post - Ishtar plus</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-$END$
+
+<div class="container mt-4">
+  <h1 class="mb-4">Create New Post</h1>
+  <form id="create-post-form">
+    <div class="mb-3">
+      <label for="post-title" class="form-label">Title</label>
+      <input type="text" class="form-control" id="post-title" name="title" required>
+    </div>
+    <div class="mb-3">
+      <label for="post-content" class="form-label">Content</label>
+      <textarea class="form-control" id="post-content" name="content" rows="5" required></textarea>
+    </div>
+    <div class="mb-3">
+      <label for="author-id" class="form-label">Author's User ID</label>
+      <input type="text" class="form-control" id="author-id" name="author_id" required pattern="\d*" title="User ID should be a number">
+    </div>
+    <button type="submit" class="btn btn-primary">Create Post</button>
+  </form>
+  <div id="loading-indicator" style="display:none;">Submitting...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const createPostForm = document.getElementById("create-post-form");
+  const loadingIndicator = document.getElementById("loading-indicator");
+
+  createPostForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    loadingIndicator.style.display = 'block'; // Show loading indicator
+
+    const postData = {
+      title: document.getElementById("post-title").value,
+      content: document.getElementById("post-content").value,
+      author_id: parseInt(document.getElementById("author-id").value),
+    };
+
+    const loginResponse = await fetch("http://127.0.0.1:8000/create_new_post", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(postData),
+    })
+
+            .then((data) => {
+              loadingIndicator.style.display = 'none'; // Hide loading indicator
+              if (data.error) {
+                alert("Error: " + data.error);
+              } else {
+                alert("Post created successfully: " + data.message);
+                window.location.href = "index.html"; // Redirect
+              }
+            })
+            .catch((error) => {
+              loadingIndicator.style.display = 'none'; // Hide loading indicator
+              console.error("Error creating post:", error);
+              alert("Failed to create post. Please try again.");
+            });
+  });
+});
+
+</script>
+
 </body>
 </html>

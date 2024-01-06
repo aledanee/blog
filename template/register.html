@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,35 +5,50 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Registration</title>
-    <!-- ... (unchanged head content) -->
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <form id="registrationForm">
-        <h1>User Registration</h1>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form id="registrationForm" class="card p-4">
+                    <h1 class="mb-3">User Registration</h1>
 
-        <label for="username">Username:</label>
-        <input type="text" id="username" required>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username:</label>
+                        <input type="text" id="username" class="form-control" required>
+                    </div>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" required>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email:</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" required>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password:</label>
+                        <input type="password" id="password" class="form-control" required>
+                    </div>
 
-        <label for="profilePicture">Profile Picture URL:</label>
-        <input type="text" id="profilePicture">
+                    <div class="mb-3">
+                        <label for="profilePicture" class="form-label">Profile Picture URL:</label>
+                        <input type="text" id="profilePicture" class="form-control">
+                    </div>
 
-        <button type="button" onclick="registerUser()">Register</button>
+                    <button type="button" class="btn btn-primary" onclick="registerUser()">Register</button>
 
-        <div>
-            <p>Already registered? <button onclick="goToLoginPage()">Login</button></p>
+                    <div class="mt-3">
+                        <p>Already registered? <a href="login.html" class="link-primary">Login</a></p>
+                    </div>
+
+                    <div id="response" class="mt-3"></div>
+                </form>
+            </div>
         </div>
-    </form>
-
-    <div id="response"></div>
+    </div>
 
     <script>
-            async function registerUser() {
+         async function registerUser() {
             const username = document.getElementById("username").value;
             const email = document.getElementById("email").value;
             const password = document.getElementById("password").value;
@@ -72,5 +84,8 @@
     window.location.href = 'login.html';
     }
     </script>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
