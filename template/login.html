@@ -39,6 +39,8 @@
     </div>
 
     <script>
+
+
         async function login() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
@@ -74,6 +76,8 @@
             if ('message' in loginData) {
         // Existing success handling code
         document.getElementById('result').innerText = `Success: ${loginData.message}`;
+        // On the first page
+        localStorage.setItem("userinfo", loginData.id_user);
         document.getElementById('result').className = 'alert alert-success';
 
         // Display user info and update with username
@@ -83,6 +87,7 @@
         setTimeout(() => window.location.href = 'index.html', 2000); // Redirect after 2 seconds
     }
         }
+
     </script>
 
     <!-- Bootstrap JS Bundle with Popper -->

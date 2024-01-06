@@ -47,68 +47,95 @@
 </div>
 
 <script>
-
-// Fetch user's ID
-// fetch(`http://127.0.0.1:8000/get-user-id?username=${loggedInUser}`)
-//     .then(response => response.json())
-//     .then(userData => {
-//         const userInfoContainer = document.getElementById('user-info');
-//         userInfoContainer.innerHTML = `<p>Welcome, user ID: ${userData.user_id}!</p>`;
-//     })
-//     .catch(error => console.error('Error fetching user data:', error));
+   // Assuming loggedInUserId is fetched or stored elsewhere
+ // const loggedInUserId = 4; // Replace with the actual logged-in user's ID
+  // Fetch and display posts
 
 
-      // Fetch and display posts
-      const fetchAndDisplayPosts = () => {
-        fetch('http://127.0.0.1:8000/display_post')
-          .then(response => response.json())
-          .then(data => {
-            const postsContainer = document.getElementById('posts-container');
-            postsContainer.innerHTML = ''; // Clear existing posts
+  // On the second page
+const param1 = localStorage.getItem('userinfo');
+const loggedInUserId = param1;
 
-            data.posts.forEach(post => {
-              const postElement = document.createElement('div');
-              postElement.classList.add('mb-4');
-              postElement.innerHTML = `
-                <div class="card">
-                  <div class="card-body">
-                    <h2 class="card-title">${post.title}</h2>
-                    <p class="card-text">${post.content}</p>
-                    <p class="card-text"><small class="text-muted">Published on: ${post.publication_date}</small></p>
-                    <button class="btn btn-primary" onclick="likePost(${post.id})">Like</button>
-                    <button class="btn btn-success" onclick="commentOnPost(${post.id})">Comment</button>
-                  </div>
-                </div>
-              `;
-              postsContainer.appendChild(postElement);
-            });
-          })
-          .catch(error => console.error('Error fetching posts:', error));
-      };
+  console.log(loggedInUserId+"   loggedInUserId")
+     console.log(param1.id_user+"   param1.id_user")
 
-      // Function to handle liking a post
-     const likePost = (postId) => {
-  const requestBody = {
-    post_id: postId,
-    user_id: 3 // Replace with the actual user ID
+// Fetch and display posts
+const fetchAndDisplayPosts = async () => {
+
+
+  try {
+    const response = await fetch('http://127.0.0.1:8000/display_post');
+    const data = await response.json();
+    const postsContainer = document.getElementById('posts-container');
+    postsContainer.innerHTML = ''; // Clear existing posts
+
+    for (const post of data.posts) {
+      const likeCount = await fetchLikeCount(post.post_id); // Fetch like count for each post
+      console.log(post.post_id)
+      console.log(post+ "gg")
+      const postElement = document.createElement('div');
+      postElement.classList.add('mb-4');
+      postElement.innerHTML = `
+        <div class="card">
+          <div class="card-body">
+            <h2 class="card-title">${post.title}</h2>
+            <p class="card-text">${post.content}</p>
+            <p class="card-text"><small class="text-muted">Published on: ${post.publication_date}</small></p>
+            <p>Likes: ${likeCount}</p> <!-- Display like count -->
+            <button class="btn btn-primary" onclick="likePost(${post.post_id}, ${loggedInUserId})">Like</button>
+            <button class="btn btn-success" onclick="commentOnPost(${post.post_id})">Comment</button>
+          </div>
+        </div>
+      `;
+      postsContainer.appendChild(postElement);
+    }
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+  }
+};
+
+
+  const fetchLikeCount = async (postId) => {
+  try {
+    const id = parseInt(postId);
+    console.log(id + "lala")
+    const response = await fetch(`http://127.0.0.1:8000/like/count/${id}`);
+        console.log(response)
+    const data = await response.json();
+    return data.like_count;
+  } catch (error) {
+    console.error('Error fetching like count:', error);
+    return 0;
+  }
+};
+
+// Existing functions (likePost and commentOnPost)...
+
+// Initial fetch and display of posts
+fetchAndDisplayPosts();
+
+
+
+  // Function to handle liking a post
+  const likePost = (postId, loggedInUserId) => {
+    console.log(loggedInUserId+"dddd")
+    fetch('http://127.0.0.1:8000/like', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify({ post_id: postId, user_id: loggedInUserId }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Like response:', data);
+      // Refresh posts after liking
+       fetchAndDisplayPosts();
+    })
+    .catch(error => console.error('Error liking post:', error));
   };
 
-  fetch('http://127.0.0.1:8000/like', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  })
-  .then(response => response.json())
-  .then(data => {
-    // You can handle the response as needed
-    console.log('Like response:', data);
-    // Refresh posts after liking
-    fetchAndDisplayPosts();
-  })
-  .catch(error => console.error('Error liking post:', error));
-};
 
       // Function to handle commenting on a post
       const commentOnPost = (postId) => {
@@ -142,6 +169,7 @@
 
       // Initial fetch and display of posts
       fetchAndDisplayPosts();
+
 </script>
 
 <!-- Bootstrap JS and Popper.js (required for some Bootstrap components) -->

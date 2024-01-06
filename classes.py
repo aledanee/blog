@@ -22,10 +22,8 @@ class Login(BaseModel):
 
 
 class BlogPost(BaseModel):
-    post_id: int
     title: str
     content: str
-    publication_date: date
     author_id: int
 
 

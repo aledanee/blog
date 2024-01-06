@@ -38,14 +38,16 @@ document.addEventListener("DOMContentLoaded", function () {
   createPostForm.addEventListener("submit", async function (event) {
     event.preventDefault();
     loadingIndicator.style.display = 'block'; // Show loading indicator
-
+    console.log("eeeee")
     const postData = {
       title: document.getElementById("post-title").value,
       content: document.getElementById("post-content").value,
       author_id: parseInt(document.getElementById("author-id").value),
     };
 
-    const loginResponse = await fetch("http://127.0.0.1:8000/create_new_post", {
+
+    console.log(postData)
+    const cnpost = await fetch("http://127.0.0.1:8000/create_new_post", {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',

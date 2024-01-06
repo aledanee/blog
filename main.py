@@ -99,7 +99,7 @@ async def login_user(user_data: Login, ):
     if existing_user:
         if existing_user[3] == password:
             id_user = existing_user[0]
-            response = {"message": f"User '{id_user}' successfully login"}
+            response = {"id_user": id_user, "message": f"User '{id_user}' successfully login"}
         else:
             response = {"error": "username or password is incorrect1"}
     else:
@@ -230,29 +230,24 @@ async def like(like_data: Like):
 
 @app.post("/comment")
 async def comment(comment_data: Comment):
-    conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
+    try:
+        conn = Db_Operation.connect_to_mysql("localhost", "root", "morootok", "blog")
+        cursor = conn.cursor()
 
-    # Extract comment data from JSON
-    post_id = comment_data.post_id
-    user_id = comment_data.user_id
-    comment_text = comment_data.comment_text
-    comment_date = comment_data.comment_date
+        # Secure query using parameterized statements
+        cursor.execute("SELECT * FROM BlogPost WHERE post_id=%s", (comment_data.post_id,))
+        existing_post = cursor.fetchone()
 
-    # Check if the post exists
-    cursor = conn.cursor()
-    query = f"SELECT * FROM BlogPost WHERE post_id='{post_id}'"
-    cursor.execute(query)
-    existing_post = cursor.fetchone()
+        if existing_post:
+            cursor.execute("INSERT INTO Comment (post_id, user_id, comment_text, comment_date) VALUES (%s, %s, %s, %s)",
+                           (comment_data.post_id, comment_data.user_id, comment_data.comment_text, comment_data.comment_date))
+            conn.commit()
+            response = {"message": "Comment added successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Post not found")
 
-    # If the post exists, proceed to add the comment
-    if existing_post:
-        # Insert a new comment record
-        query = f"INSERT INTO Comment (post_id, user_id, comment_text, comment_date) VALUES ('{post_id}', '{user_id}', '{comment_text}', '{comment_date}')"
-        cursor.execute(query)
-        conn.commit()
-        response = {"message": "Comment added successfully"}
-    else:
-        raise HTTPException(status_code=404, detail="Post not found")
+    finally:
+        conn.close()
 
     return response
 
